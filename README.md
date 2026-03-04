@@ -1,106 +1,82 @@
-Order–Inventory Management System (Event-Driven Microservices)
+# Order–Inventory Management System (Event-Driven Microservices)
 
-Overview
+## Overview
+This project is an **event-driven microservices system** built using **Spring Boot, Apache Kafka, and MySQL**, designed to demonstrate **Saga-based distributed transaction management**.
 
-This project is an event-driven microservices system built using Spring Boot, Apache Kafka, and MySQL, designed to demonstrate Saga-based distributed transaction management.
+The system handles **order creation, inventory reservation, and order confirmation** using **asynchronous communication**, ensuring **loose coupling and scalability**.
 
-The system handles order creation, inventory reservation, and order confirmation using asynchronous communication between services, ensuring loose coupling and scalability.
+---
 
+## Microservices Architecture
 
-Microservices Architecture
+**Implemented Services:**
+- **Order Service**
+- **Inventory Service**
+- **(Planned) Payment Service**
+- **(Planned) Notification Service**
+- **Base Module** (shared event & DTO definitions)
 
-Currently implemented services:
+**Communication:** All services communicate via **Kafka events**.
 
-Order Service
+---
 
-Inventory Service
+## High-Level Flow
 
-(Planned) Payment Service
+### 1️⃣ Order Creation
+- Client sends a `POST /orders` request  
+- Order is stored with status **PENDING**  
+- `ORDER_CREATED` event is published to Kafka  
 
-(Planned) Notification Service
+### 2️⃣ Inventory Reservation
+- **Inventory Service** consumes `ORDER_CREATED` events  
+- For each item:
+  - Checks product existence  
+  - Checks available quantity  
+- If successful:
+  - Reduces **totalQuantity**  
+  - Increases **reservedQuantity**  
+  - Publishes `INVENTORY_RESERVED`  
+- If failed:
+  - Publishes `INVENTORY_REJECTED`  
 
-Base Module (shared event & DTO definitions)
+### 3️⃣ Order Status Update
+- **Order Service** consumes inventory events  
+- On `INVENTORY_RESERVED`:
+  - Order → **CONFIRMED**  
+  - Publishes `ORDER_CONFIRMED`  
+- On `INVENTORY_REJECTED`:
+  - Order → **CANCELLED**  
+  - Publishes `ORDER_CANCELLED`  
 
-Communication: All services communicate via Kafka events.
+### 4️⃣ Inventory Finalization
+- **Inventory Service** consumes `ORDER_CONFIRMED` events  
+- Reduces **reservedQuantity**  
+- Inventory is finalized  
 
-High-Level Flow
-1️⃣ Order Creation
+---
 
-Client sends a POST /orders request
+## Inventory Quantity Model
 
-Order is stored with status PENDING
+| **Field**          | **Description**                                      |
+|-------------------|------------------------------------------------------|
+| `totalQuantity`    | Actual stock count                                   |
+| `reservedQuantity` | Temporarily reserved stock for pending orders       |
 
-ORDER_CREATED event is published to Kafka
+> Prevents over-selling and supports asynchronous processing.
 
-2️⃣ Inventory Reservation
+---
 
-Inventory Service consumes ORDER_CREATED events
+## Kafka Events Used
 
-For each item:
+**Produced Events:**
+- `ORDER_CREATED`  
+- `INVENTORY_RESERVED`  
+- `INVENTORY_REJECTED`  
+- `ORDER_CONFIRMED`  
+- `ORDER_CANCELLED`  
 
-Checks product existence
-
-Checks available quantity
-
-If successful:
-
-Reduces totalQuantity
-
-Increases reservedQuantity
-
-Publishes INVENTORY_RESERVED
-
-If failed:
-
-Publishes INVENTORY_REJECTED
-
-3️⃣ Order Status Update
-
-Order Service consumes inventory events
-
-On INVENTORY_RESERVED:
-
-Order → CONFIRMED
-
-Publishes ORDER_CONFIRMED
-
-On INVENTORY_REJECTED:
-
-Order → CANCELLED
-
-Publishes ORDER_CANCELLED
-
-4️⃣ Inventory Finalization
-
-Inventory Service consumes ORDER_CONFIRMED events
-
-Reduces reservedQuantity
-
-Inventory is finalized
-
-Inventory Quantity Model
-Field	Description
-totalQuantity	Actual stock count
-reservedQuantity	Temporarily reserved stock for pending orders
-
-This prevents over-selling and supports asynchronous processing.
-
-Kafka Events Used
-
-Produced Events:
-
-ORDER_CREATED
-
-INVENTORY_RESERVED
-
-INVENTORY_REJECTED
-
-ORDER_CONFIRMED
-
-ORDER_CANCELLED
-
-Event Structure (Example):
-
+**Event Structure (Example):**
+```json
 {
   "baseEvent": {
     "eventId": "uuid",
@@ -111,8 +87,4 @@ Event Structure (Example):
     { "productId": "P01", "quantity": 1 }
   ]
 }
-Future Enhancements
 
-Payment Service – consume INVENTORY_RESERVED events for payment processing
-
-Notification Service – send email notifications on order status changes
