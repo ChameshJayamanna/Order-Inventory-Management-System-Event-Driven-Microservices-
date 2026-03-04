@@ -1,13 +1,13 @@
-**"Order–Inventory Management System (Event-Driven Microservices)"**
-**Overview**
+Order–Inventory Management System (Event-Driven Microservices)
+Overview
 
 This project is an event-driven microservices system built using Spring Boot, Apache Kafka, and MySQL, designed to demonstrate Saga-based distributed transaction management.
 
 The system handles order creation, inventory reservation, and order confirmation using asynchronous communication between services, ensuring loose coupling and scalability.
 
-**Microservices Architecture**
+Microservices Architecture
 
-**Currently implemented services:**
+Currently implemented services:
 
 Order Service
 
@@ -19,9 +19,9 @@ Inventory Service
 
 Base Module (shared event & DTO definitions)
 
-Communication between services is done via Kafka events.
+Communication: All services communicate via Kafka events.
 
-🔄 High-Level Flow
+High-Level Flow
 1️⃣ Order Creation
 
 Client sends a POST /orders request
@@ -32,7 +32,7 @@ ORDER_CREATED event is published to Kafka
 
 2️⃣ Inventory Reservation
 
-Inventory Service consumes ORDER_CREATED
+Inventory Service consumes ORDER_CREATED events
 
 For each item:
 
@@ -70,21 +70,22 @@ Publishes ORDER_CANCELLED
 
 4️⃣ Inventory Finalization
 
-Inventory Service consumes ORDER_CONFIRMED
+Inventory Service consumes ORDER_CONFIRMED events
 
 Reduces reservedQuantity
 
 Inventory is finalized
 
-**Inventory Quantity Model**
+Inventory Quantity Model
 Field	Description
 totalQuantity	Actual stock count
 reservedQuantity	Temporarily reserved stock for pending orders
 
-This prevents over-selling and supports async processing.
+This prevents over-selling and supports asynchronous processing.
 
-**Kafka Events Used**
-Produced Events
+Kafka Events Used
+
+Produced Events:
 
 ORDER_CREATED
 
@@ -96,7 +97,8 @@ ORDER_CONFIRMED
 
 ORDER_CANCELLED
 
-Event Structure (Example)
+Event Structure (Example):
+
 {
   "baseEvent": {
     "eventId": "uuid",
@@ -107,10 +109,8 @@ Event Structure (Example)
     { "productId": "P01", "quantity": 1 }
   ]
 }
+Future Enhancements
 
-**Future Enhancements**
+Payment Service – consume INVENTORY_RESERVED events for payment processing
 
--Payment Service (consume INVENTORY_RESERVED)
--Notification Service (email on order status)
-
-
+Notification Service – send email notifications on order status changes
