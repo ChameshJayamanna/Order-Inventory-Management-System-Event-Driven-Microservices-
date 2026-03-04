@@ -1,9 +1,11 @@
 Order–Inventory Management System (Event-Driven Microservices)
+
 Overview
 
 This project is an event-driven microservices system built using Spring Boot, Apache Kafka, and MySQL, designed to demonstrate Saga-based distributed transaction management.
 
 The system handles order creation, inventory reservation, and order confirmation using asynchronous communication between services, ensuring loose coupling and scalability.
+
 
 Microservices Architecture
 
