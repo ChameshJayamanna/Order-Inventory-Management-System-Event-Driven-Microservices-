@@ -88,3 +88,28 @@ The system handles **order creation, inventory reservation, and order confirmati
   ]
 }
 
+This project includes an AI-powered demand prediction feature to enhance inventory management.
+
+### Overview
+
+A separate Python-based microservice is integrated into the system to predict future product demand based on historical order data. This helps the inventory service make proactive decisions and detect potential low stock situations.
+
+---
+
+### 🧠 How It Works
+
+1. Historical order data is aggregated by product and date.
+2. A machine learning model (Linear Regression) is trained using this data.
+3. The model predicts the expected demand (quantity) for each product for the next day.
+4. The Inventory Service calls the AI service via a REST API.
+5. Predicted demand is compared with current stock levels.
+6. If predicted demand exceeds available stock, a low stock alert is triggered.
+
+---
+
+### ⚙️ Architecture
+
+Order Service → Inventory Service → AI Service (Flask) → Prediction → Stock Check
+
+---
+
