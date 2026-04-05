@@ -11,9 +11,12 @@ import com.inventory.inventory.kafka.InventoryEventProducer;
 import com.inventory.inventory.model.InventoryItem;
 import com.inventory.inventory.repository.InventoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -45,6 +48,42 @@ public class InventoryService {
         item.setReservedQuantity(0);
 
         return inventoryRepository.save(item);
+    }
+
+    // ai model api method for stock prediction for tomorrow
+    @Autowired
+    private RestTemplate restTemplate;
+
+    public Map<String, Double> getPredictions() {
+        String url = "http://localhost:5000/predict";
+        ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+        return response.getBody();
+    }
+
+    public void checkPredictedDemand() {
+
+        Map<String, Double> predictions = getPredictions();
+
+        for (String productId : predictions.keySet()) {
+
+            Optional<InventoryItem> optionalItem =
+                    inventoryRepository.findById(productId);
+
+            if (optionalItem.isEmpty()) continue;
+
+            InventoryItem item = optionalItem.get();
+
+            int currentStock =
+                    item.getTotalQuantity() - item.getReservedQuantity();
+
+            double predicted = predictions.get(productId);
+
+            if (currentStock < predicted) {
+                System.out.println("LOW STOCK predicted for: " + productId);
+            }else{
+                System.out.println(productId+": "+predicted);
+            }
+        }
     }
 
     public void processOrderCreated(OrderCreatedEvent event) {
@@ -98,6 +137,13 @@ public class InventoryService {
 
         //Publish INVENTORY_RESERVED
         publishInventoryReserved(event);
+
+        //Check Prediction (ai model)
+        try {
+            checkPredictedDemand();
+        } catch (Exception e) {
+            System.out.println("AI prediction failed: " + e.getMessage());
+        }
     }
 
     private void publishInventoryReserved(OrderCreatedEvent orderEvent) {

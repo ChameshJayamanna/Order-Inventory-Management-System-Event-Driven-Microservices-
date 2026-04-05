@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -54,6 +55,7 @@ public class OrderService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         order.setTotalAmount(totalAmount);
+        order.setCreatedAt(LocalDateTime.now());
 
         // 3️⃣ Save order to DB
         Order savedOrder = orderRepository.save(order);
