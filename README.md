@@ -87,7 +87,7 @@ The system handles **order creation, inventory reservation, and order confirmati
     { "productId": "P01", "quantity": 1 }
   ]
 }
-
+```
 This project includes an AI-powered demand prediction feature to enhance inventory management.
 
 ### Overview
@@ -96,7 +96,7 @@ A separate Python-based microservice is integrated into the system to predict fu
 
 ---
 
-### 🧠 How It Works
+### How It Works
 
 1. Historical order data is aggregated by product and date.
 2. A machine learning model (Linear Regression) is trained using this data.
